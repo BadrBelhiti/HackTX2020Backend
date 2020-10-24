@@ -10,6 +10,10 @@ public class Credentials {
         this.password = password;
     }
 
+    public boolean assertNonNull() {
+        return this.username != null && this.password != null;
+    }
+
     public String getUsername() {
         return username;
     }

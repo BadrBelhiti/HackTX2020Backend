@@ -75,6 +75,10 @@ public class MainController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Credentials credentials) {
+        if (!credentials.assertNonNull()) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "invalid credentials"), HttpStatus.BAD_REQUEST);
+        }
+
         if (!userRepository.existsByUsername(credentials.getUsername())) {
             return new ResponseEntity<>(Collections.singletonMap("error", "invalid credentials"), HttpStatus.BAD_REQUEST);
         }
@@ -91,13 +95,13 @@ public class MainController {
         return new ResponseEntity<>(Collections.singletonMap("token", token), HttpStatus.OK);
     }
 
-    @PostMapping("/report")
-    public ResponseEntity<?> report(@RequestHeader Map<String, String> headers, @RequestBody Map<String, String> data) {
+    @PostMapping
+    public ResponseEntity<?> resetPassword(@RequestHeader Map<String, String> headers, @RequestBody Map<String, String> data) {
         if (!headers.containsKey("authorization")) {
             return new ResponseEntity<>(Collections.singletonMap("error", "This call requires auth"), HttpStatus.UNAUTHORIZED);
         }
 
-        if (!data.containsKey("username") || !data.containsKey("time") || !data.containsKey("zipcode") || !data.containsKey("symptoms")) {
+        if (!data.containsKey("username") || !data.containsKey("new-password")) {
             return new ResponseEntity<>(Collections.singletonMap("error", "malformed data"), HttpStatus.BAD_REQUEST);
         }
 
@@ -107,15 +111,49 @@ public class MainController {
         String token = authHeader.substring(7);
 
         String username = data.get("username");
-        String time = data.get("time");
-        String zipcode = data.get("zipcode");
-        String symptoms = data.get("symptoms");
+        String newPassword = data.get("new-password");
 
-        if (!Utils.verifyToken(username, token)) {
+        if (!Utils.verifyToken(username, token, key)) {
             return new ResponseEntity<>(Collections.singletonMap("error", "Bad token"), HttpStatus.BAD_REQUEST);
         }
 
-        if (!Utils.isInteger(time) || !Utils.isInteger(zipcode) || !Utils.isInteger(symptoms)) {
+        if (!Utils.validatePassword(newPassword)) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "invalid password"), HttpStatus.BAD_REQUEST);
+        }
+
+        // Update password
+        User user = userRepository.findByUsername(username);
+        String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt(10));
+        user.updatePassword(hashedPassword);
+        userRepository.save(user);
+
+        return new ResponseEntity<>(Collections.singletonMap("success", "password updated"), HttpStatus.OK);
+    }
+
+    @PostMapping("/report")
+    public ResponseEntity<?> report(@RequestHeader Map<String, String> headers, @RequestBody Map<String, String> data) {
+        if (!headers.containsKey("authorization")) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "This call requires auth"), HttpStatus.UNAUTHORIZED);
+        }
+
+        if (!data.containsKey("username") || !data.containsKey("zipcode") || !data.containsKey("symptoms")) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "malformed data"), HttpStatus.BAD_REQUEST);
+        }
+
+        String authHeader = headers.get("authorization");
+
+        // Header in form {"authorization": "Bearer a.b.c"}
+        String token = authHeader.substring(7);
+
+        String username = data.get("username");
+        String zipcode = data.get("zipcode");
+        String symptoms = data.get("symptoms");
+
+        if (!Utils.verifyToken(username, token, key)) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "Bad token"), HttpStatus.BAD_REQUEST);
+        }
+
+        if (!Utils.isInteger(zipcode) || !Utils.isInteger(symptoms)) {
             return new ResponseEntity<>(Collections.singletonMap("error", "malformed data"), HttpStatus.BAD_REQUEST);
         }
 
@@ -129,7 +167,7 @@ public class MainController {
             return new ResponseEntity<>(Collections.singletonMap("error", errorMessage), HttpStatus.BAD_REQUEST);
         }
 
-        Report report = new Report(Long.toString(System.nanoTime()), Long.parseLong(time), Integer.parseInt(zipcode), Integer.parseInt(symptoms));
+        Report report = new Report(Long.toString(System.nanoTime()), System.currentTimeMillis(), Integer.parseInt(zipcode), Integer.parseInt(symptoms));
         symptomsRepository.save(report);
 
         final int pointsReward = 100;
@@ -143,6 +181,7 @@ public class MainController {
             user.resetStreak();
         }
 
+        user.registerReport();
         userRepository.save(user);
 
         return new ResponseEntity<>(Collections.singletonMap("success", "report counted"), HttpStatus.OK);

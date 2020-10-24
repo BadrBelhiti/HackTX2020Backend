@@ -2,8 +2,10 @@ package comp.hacktx.backend.models;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
+@Table(name = "reports")
 public class Report {
 
     @Id

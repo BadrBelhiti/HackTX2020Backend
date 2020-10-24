@@ -41,6 +41,10 @@ public class User {
         this.streak = 0;
     }
 
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
+    }
+
     public void registerReport() {
         this.lastReport = System.currentTimeMillis();
     }

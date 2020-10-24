@@ -1,6 +1,9 @@
 package comp.hacktx.backend;
 
 import comp.hacktx.backend.models.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -9,11 +12,19 @@ import java.util.Set;
 
 public class Utils {
 
+    /**
+     * @param username Can be _any_ String
+     * @return True if the username meets username guidelines, false otherwise.
+     */
     public static boolean validateUsername(String username) {
         // TODO: Validate
         return true;
     }
 
+    /**
+     * @param password Can be _any_ String
+     * @return True if the password meets password guidelines, false otherwise.
+     */
     public static boolean validatePassword(String password) {
         // TODO: Validate
         return true;
@@ -25,10 +36,18 @@ public class Utils {
                 .signWith(Keys.hmacShaKeyFor(key.getBytes())).compact();
     }
 
-    public static boolean verifyToken(String username, String token) {
-        // TODO: Validate token
-        // https://github.com/jwtk/jjwt#jws-read
-        return false;
+    public static boolean verifyToken(String username, String token, String key) {
+        try {
+            Jwts.parserBuilder()
+                    .requireSubject(username)
+                    .setSigningKey(key.getBytes())
+                    .build()
+                    .parseClaimsJws(token);
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
     }
 
     public static boolean isInteger(String str) {
