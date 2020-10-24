@@ -11,5 +11,4 @@ import java.util.List;
 public interface SymptomsRepository extends CrudRepository<Report, String> {
 
     List<Report> findAllByTimeBeforeAndTimeAfterAndZipcode(long end, long start, int zipcode);
-
 }

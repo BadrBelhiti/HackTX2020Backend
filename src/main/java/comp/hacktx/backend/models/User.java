@@ -29,6 +29,22 @@ public class User {
         this.streak = streak;
     }
 
+    public void givePoints(int points) {
+        this.points += points;
+    }
+
+    public void incrementStreak() {
+        this.streak++;
+    }
+
+    public void resetStreak() {
+        this.streak = 0;
+    }
+
+    public void registerReport() {
+        this.lastReport = System.currentTimeMillis();
+    }
+
     public String getId() {
         return id;
     }

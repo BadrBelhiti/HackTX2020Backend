@@ -8,7 +8,6 @@ import comp.hacktx.backend.repositories.SymptomsRepository;
 import comp.hacktx.backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api")
@@ -62,7 +60,6 @@ public class MainController {
             return new ResponseEntity<>(Collections.singletonMap("error", "User already exists"), HttpStatus.BAD_REQUEST);
         }
 
-
         // Create and add user
         String id = Long.toString(System.nanoTime());
         String username = credentials.getUsername();
@@ -74,6 +71,81 @@ public class MainController {
         String token = Utils.buildToken(user, key);
 
         return new ResponseEntity<>(Collections.singletonMap("token", token), HttpStatus.OK);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Credentials credentials) {
+        if (!userRepository.existsByUsername(credentials.getUsername())) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "invalid credentials"), HttpStatus.BAD_REQUEST);
+        }
+
+        User user = userRepository.findByUsername(credentials.getUsername());
+
+        if (!BCrypt.checkpw(credentials.getPassword(), user.getPassword())) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "invalid credentials"), HttpStatus.BAD_REQUEST);
+        }
+
+        // Generate auth token
+        String token = Utils.buildToken(user, key);
+
+        return new ResponseEntity<>(Collections.singletonMap("token", token), HttpStatus.OK);
+    }
+
+    @PostMapping("/report")
+    public ResponseEntity<?> report(@RequestHeader Map<String, String> headers, @RequestBody Map<String, String> data) {
+        if (!headers.containsKey("authorization")) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "This call requires auth"), HttpStatus.UNAUTHORIZED);
+        }
+
+        if (!data.containsKey("username") || !data.containsKey("time") || !data.containsKey("zipcode") || !data.containsKey("symptoms")) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "malformed data"), HttpStatus.BAD_REQUEST);
+        }
+
+        String authHeader = headers.get("authorization");
+
+        // Header in form {"authorization": "Bearer a.b.c"}
+        String token = authHeader.substring(7);
+
+        String username = data.get("username");
+        String time = data.get("time");
+        String zipcode = data.get("zipcode");
+        String symptoms = data.get("symptoms");
+
+        if (!Utils.verifyToken(username, token)) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "Bad token"), HttpStatus.BAD_REQUEST);
+        }
+
+        if (!Utils.isInteger(time) || !Utils.isInteger(zipcode) || !Utils.isInteger(symptoms)) {
+            return new ResponseEntity<>(Collections.singletonMap("error", "malformed data"), HttpStatus.BAD_REQUEST);
+        }
+
+        User user = userRepository.findByUsername(username);
+
+        // Get time since user made last report
+        long deltaTime = System.currentTimeMillis() - user.getLastReport();
+
+        if (deltaTime < 24 * 60 * 60 * 1000) {
+            String errorMessage = "Must wait 24 hours between reports. Last report: " + user.getLastReport();
+            return new ResponseEntity<>(Collections.singletonMap("error", errorMessage), HttpStatus.BAD_REQUEST);
+        }
+
+        Report report = new Report(Long.toString(System.nanoTime()), Long.parseLong(time), Integer.parseInt(zipcode), Integer.parseInt(symptoms));
+        symptomsRepository.save(report);
+
+        final int pointsReward = 100;
+
+        // Reward user
+        user.givePoints(pointsReward);
+
+        if (System.currentTimeMillis() - user.getLastReport() <= 2 * 24 * 60 * 60 * 1000) {
+            user.incrementStreak();
+        } else {
+            user.resetStreak();
+        }
+
+        userRepository.save(user);
+
+        return new ResponseEntity<>(Collections.singletonMap("success", "report counted"), HttpStatus.OK);
     }
 
     @GetMapping("/records/{zipcode}/{start}/{end}")
