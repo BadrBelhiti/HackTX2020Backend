@@ -1,7 +1,9 @@
 package comp.hacktx.backend.models;
 
-import org.springframework.data.annotation.Id;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
+@Entity
 public class Report {
 
     @Id
@@ -9,6 +11,10 @@ public class Report {
     private String username;
     private long time;
     private int zipcode;
+
+    public Report() {
+
+    }
 
     public Report(String id, String username, long time, int zipcode) {
         this.id = id;

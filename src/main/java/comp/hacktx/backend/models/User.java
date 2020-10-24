@@ -1,7 +1,11 @@
 package comp.hacktx.backend.models;
 
-import org.springframework.data.annotation.Id;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
+@Entity
+@Table(name = "users")
 public class User {
 
     @Id
@@ -10,13 +14,19 @@ public class User {
     private String password;
     private long lastReport;
     private int points;
+    private int streak;
 
-    public User(String id, String username, String password, long lastReport, int points) {
+    public User() {
+
+    }
+
+    public User(String id, String username, String password, long lastReport, int points, int streak) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.lastReport = lastReport;
         this.points = points;
+        this.streak = streak;
     }
 
     public String getId() {
@@ -37,5 +47,9 @@ public class User {
 
     public int getPoints() {
         return points;
+    }
+
+    public int getStreak() {
+        return streak;
     }
 }
