@@ -1,9 +1,6 @@
 package comp.hacktx.backend;
 
 import comp.hacktx.backend.models.User;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -17,8 +14,7 @@ public class Utils {
      * @return True if the username meets username guidelines, false otherwise.
      */
     public static boolean validateUsername(String username) {
-        // TODO: Validate
-        return true;
+        return username.matches("\\w+") && username.length() >= 4;
     }
 
     /**
@@ -26,7 +22,13 @@ public class Utils {
      * @return True if the password meets password guidelines, false otherwise.
      */
     public static boolean validatePassword(String password) {
-        // TODO: Validate
+        for (int i = 0; i < password.length(); i++){
+            char c = password.charAt(i);
+            if (c < 32 || c > 126) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -56,7 +58,7 @@ public class Utils {
 
     private static final String[] SYMPTOMS = new String[]
             {"Fever", "Coughing", "Sneezing", "Fatigue", "Shortness of breath",
-                    "Chest pain", "Muscle aches", "sore throat"};
+                    "Chest pain", "Muscle aches", "Sore throat"};
 
     public static Set<String> getSymptomsList(int symptoms) {
         Set<String> result = new HashSet<>();

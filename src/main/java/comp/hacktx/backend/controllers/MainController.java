@@ -95,7 +95,7 @@ public class MainController {
         return new ResponseEntity<>(Collections.singletonMap("token", token), HttpStatus.OK);
     }
 
-    @PostMapping
+    @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestHeader Map<String, String> headers, @RequestBody Map<String, String> data) {
         if (!headers.containsKey("authorization")) {
             return new ResponseEntity<>(Collections.singletonMap("error", "This call requires auth"), HttpStatus.UNAUTHORIZED);
