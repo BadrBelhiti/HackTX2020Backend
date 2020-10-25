@@ -24,8 +24,8 @@ public class MainController {
     @Value("${security.key}")
     private String key;
 
-    private UserRepository userRepository;
-    private SymptomsRepository symptomsRepository;
+    private final UserRepository userRepository;
+    private final SymptomsRepository symptomsRepository;
 
     @Autowired
     public MainController(UserRepository userRepository, SymptomsRepository symptomsRepository) {
@@ -98,11 +98,12 @@ public class MainController {
 
     /**
      * @param headers All headers present in request
-     * @param data Entire body of request
+     * @param data    Entire body of request
      * @return ResponseEntity indicating failure or success of this request
      */
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestHeader Map<String, String> headers, @RequestBody Map<String, String> data) {
+    public ResponseEntity<?> resetPassword(@RequestHeader Map<String, String> headers, @RequestBody Map<String,
+            String> data) {
         ResponseEntity<?> verificationResult = verifyToken(headers, data);
         if (verificationResult != null) {
             return verificationResult;
@@ -130,7 +131,7 @@ public class MainController {
 
     /**
      * @param headers All headers present in request
-     * @param data Entire body of request
+     * @param data    Entire body of request
      * @return ResponseEntity indicating failure or success of this request
      */
     @PostMapping("/report")
@@ -177,26 +178,28 @@ public class MainController {
 
     /**
      * @param zipcode Zipcode to query for records
-     * @param start The beginning of the time window to query data from. Measured in milliseconds from epoch.
-     * @param end The ending of the time window to query data from. Measured in milliseconds from epoch.
+     * @param start   The beginning of the time window to query data from. Measured in milliseconds from epoch.
+     * @param end     The ending of the time window to query data from. Measured in milliseconds from epoch.
      * @return A ResponseEntity containing all relevant records, or containing an error if one exists.
      */
     @GetMapping("/records/{zipcode}/{start}/{end}")
-    public ResponseEntity<?> getReports(@PathVariable String zipcode, @PathVariable String start, @PathVariable String end) {
+    public ResponseEntity<?> getReports(@PathVariable String zipcode, @PathVariable String start,
+                                        @PathVariable String end) {
         // Validate arguments
         if (!Utils.isInteger(zipcode) || !Utils.isInteger(start) || !Utils.isInteger(end)) {
             return error("malformed arg", HttpStatus.BAD_REQUEST);
         }
 
         List<Report> reports =
-                symptomsRepository.findAllByTimeBeforeAndTimeAfterAndZipcode(Long.parseLong(end), Long.parseLong(start), Integer.parseInt(zipcode));
+                symptomsRepository.findAllByTimeBeforeAndTimeAfterAndZipcode(Long.parseLong(end),
+                        Long.parseLong(start), Integer.parseInt(zipcode));
 
         return simpleResponse("reports", reports, HttpStatus.OK);
     }
 
     /**
      * @param headers All headers present in request
-     * @param body Full request body
+     * @param body    Full request body
      * @return ResponseEntity object if the verification fails and an error is generated.
      * If no error is found, then return null.
      */
@@ -224,8 +227,8 @@ public class MainController {
     }
 
     /**
-     * @param title Key of singleton map
-     * @param data Value of singleton map
+     * @param title  Key of singleton map
+     * @param data   Value of singleton map
      * @param status HTTP status code to return
      * @return ResponseEntity representing a singleton response with the specified status code
      */
@@ -234,7 +237,7 @@ public class MainController {
     }
 
     /**
-     * @param error Error message
+     * @param error  Error message
      * @param status HTTP status to return
      * @return ResponseEntity representing error along with status code
      */
@@ -243,7 +246,7 @@ public class MainController {
     }
 
     /**
-     * @param user The user who is submitting the report
+     * @param user   The user who is submitting the report
      * @param report The incoming symptoms report from the user
      */
     private void submitReport(User user, Report report) {
