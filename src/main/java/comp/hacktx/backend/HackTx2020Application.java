@@ -14,8 +14,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories("comp.hacktx.backend.repositories")
 @EntityScan("comp.hacktx.backend.models")
 @SpringBootApplication
-// @SpringBootApplication(exclude = {JndiConnectionFactoryAutoConfiguration.class, DataSourceAutoConfiguration.class,
-        // HibernateJpaAutoConfiguration.class, JpaRepositoriesAutoConfiguration.class, DataSourceTransactionManagerAutoConfiguration.class})
 public class HackTx2020Application {
 
     public static void main(String[] args) {

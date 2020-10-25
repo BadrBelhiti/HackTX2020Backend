@@ -4,12 +4,10 @@ import comp.hacktx.backend.models.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class Utils {
 
     /**
+     * A username is valid if it's at least 4 characters long and only contains alphanumeric characters.
      * @param username Can be _any_ String
      * @return True if the username meets username guidelines, false otherwise.
      */
@@ -18,10 +16,17 @@ public class Utils {
     }
 
     /**
+     * A password is valid if it is at 4 characters long and only contains characters in the ASCII range [32, 126].
      * @param password Can be _any_ String
      * @return True if the password meets password guidelines, false otherwise.
      */
     public static boolean validatePassword(String password) {
+        // Check length
+        if (password.length() < 4) {
+            return false;
+        }
+
+        // Check each character
         for (int i = 0; i < password.length(); i++){
             char c = password.charAt(i);
             if (c < 32 || c > 126) {
@@ -32,12 +37,23 @@ public class Utils {
         return true;
     }
 
+    /**
+     * @param user Username to build token for
+     * @param key Secret key to sign
+     * @return String representation of generated JWT
+     */
     public static String buildToken(User user, String key) {
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .signWith(Keys.hmacShaKeyFor(key.getBytes())).compact();
     }
 
+    /**
+     * @param username Username to verify with
+     * @param token JSON web token as String
+     * @param key Secret key
+     * @return True if the username and token combination are verified, false otherwise.
+     */
     public static boolean verifyToken(String username, String token, String key) {
         try {
             Jwts.parserBuilder()
@@ -52,39 +68,12 @@ public class Utils {
         return true;
     }
 
+    /**
+     * @param str A String suspected to represent a non-negative integer.
+     * @return True if the String can be parsed into a non-negative integer, false otherwise.
+     */
     public static boolean isInteger(String str) {
         return str.matches("\\d+");
-    }
-
-    private static final String[] SYMPTOMS = new String[]
-            {"Fever", "Coughing", "Sneezing", "Fatigue", "Shortness of breath",
-                    "Chest pain", "Muscle aches", "Sore throat"};
-
-    public static Set<String> getSymptomsList(int symptoms) {
-        Set<String> result = new HashSet<>();
-
-        int pos = 0;
-        while (symptoms > 0) {
-            if (symptoms % 2 == 1) {
-                result.add(SYMPTOMS[pos]);
-            }
-            symptoms /= 2;
-        }
-
-        return result;
-    }
-
-    public static int getSymptomsMask(Set<String> symptoms) {
-        int result = 0;
-
-        for (String symptom : SYMPTOMS) {
-            if (symptoms.contains(symptom)) {
-                result++;
-            }
-            result *= 2;
-        }
-
-        return result;
     }
 
 }
