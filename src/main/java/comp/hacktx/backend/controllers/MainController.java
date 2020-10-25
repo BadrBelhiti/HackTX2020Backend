@@ -109,12 +109,12 @@ public class MainController {
             return verificationResult;
         }
 
-        if (!data.containsKey("new-password")) {
+        if (!data.containsKey("newpassword")) {
             return error("malformed data", HttpStatus.BAD_REQUEST);
         }
 
         String username = data.get("username");
-        String newPassword = data.get("new-password");
+        String newPassword = data.get("newpassword");
 
         if (!Utils.validatePassword(newPassword)) {
             return error("invalid password", HttpStatus.BAD_REQUEST);
@@ -198,6 +198,36 @@ public class MainController {
     }
 
     /**
+     * @param username User's username to retrieve points for
+     * @return ResponseEntity indicating number of points user has or an error on failure.
+     */
+    @GetMapping("/points/{username}")
+    public ResponseEntity<?> getPoints(@PathVariable String username) {
+        if (!userRepository.existsByUsername(username)) {
+            return error("user doesn't exist", HttpStatus.BAD_REQUEST);
+        }
+
+        User user = userRepository.findByUsername(username);
+
+        return simpleResponse("points", user.getPoints(), HttpStatus.OK);
+    }
+
+    /**
+     * @param username User's username to retrieve streak for
+     * @return ResponseEntity indicating user's streak or an error on failure.
+     */
+    @GetMapping("/streak/{username}")
+    public ResponseEntity<?> getStreak(@PathVariable String username) {
+        if (!userRepository.existsByUsername(username)) {
+            return error("user doesn't exist", HttpStatus.BAD_REQUEST);
+        }
+
+        User user = userRepository.findByUsername(username);
+
+        return simpleResponse("streak", user.getStreak(), HttpStatus.OK);
+    }
+
+    /**
      * @param headers All headers present in request
      * @param body    Full request body
      * @return ResponseEntity object if the verification fails and an error is generated.
@@ -258,9 +288,9 @@ public class MainController {
         // Reward user
         user.givePoints(pointsReward);
 
-        // If report was made less than 48 hours from previous report, then the user has submitted a report on
-        // two consecutive days and therefore their streak is incremented. Otherwise, reset streak.
-        if (System.currentTimeMillis() - user.getLastReport() <= 2 * 24 * 60 * 60 * 1000) {
+        // If report was made less than 48 hours from previous report or is first report, then the user has submitted a
+        // report on two consecutive days and therefore their streak is incremented. Otherwise, reset streak.
+        if (user.getLastReport() == 0 || System.currentTimeMillis() - user.getLastReport() <= 2 * 24 * 60 * 60 * 1000) {
             user.incrementStreak();
         } else {
             user.resetStreak();
