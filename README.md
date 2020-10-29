@@ -1,8 +1,8 @@
-# HackTX2020Backend
-Backend for our HackTX 2020 mobile app
+# HackTX2020Backend (SymptomAnalytics)
+Backend for our HackTX 2020 mobile app \
+_Warning_: This was developed at a hackathon and is only a prototype. As a result, several security features have not been implemented. 
 
 ### Function and purpose
-
 Our backend allows users to create an account and submit daily reports on their health. Data is aggregated in an SQL-type format in order to allow for
 seamless server-side data analysis. 
 
